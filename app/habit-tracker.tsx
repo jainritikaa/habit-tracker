@@ -748,11 +748,11 @@ export default function Habito() {
     return todayEntry ? todayEntry.value : 0
   }
 
-  const getWeeklyAverage = (stat: Stat) => {
-    const last7Days = stat.history.slice(-7)
-    const sum = last7Days.reduce((acc, day) => acc + day.value, 0)
-    return (sum / 7).toFixed(1)
-  }
+ // const getWeeklyAverage = (stat: Stat) => {
+  //  const last7Days = stat.history.slice(-7)
+    //const sum = last7Days.reduce((acc, day) => acc + day.value, 0)
+    //return (sum / 7).toFixed(1)
+  //}
 
   // Calendar generation
   const generateCalendar = () => {
