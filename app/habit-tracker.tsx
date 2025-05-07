@@ -21,6 +21,11 @@ import {
 } from "recharts"
 import Image from "next/image"
 
+type Day = {
+  date: string;
+  value: number;
+};
+
 // Types
 type Habit = {
   id: string
@@ -748,7 +753,7 @@ export default function Habito() {
     return todayEntry ? todayEntry.value : 0
   }
 
- // const getWeeklyAverage = (stat: Stat) => {
+ //const getWeeklyAverage = (stat: Stat) => {
   //  const last7Days = stat.history.slice(-7)
     //const sum = last7Days.reduce((acc, day) => acc + day.value, 0)
     //return (sum / 7).toFixed(1)
@@ -1359,20 +1364,20 @@ export default function Habito() {
             </div>
 
             <div className="w-full md:w-2/3 h-64">
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart
-                  data={mockData.habits.map((habit) => ({
-                    name: habit.name,
-                    ...getFilteredData(
-                      habit.history.map((h) => ({ date: h.date, value: h.completed ? 100 : 0 })),
-                      dateRange === "week" ? 7 : dateRange === "month" ? 30 : 90,
-                    ).reduce((acc, day) => {
-                      acc[day.date] = day.value
-                      return acc
-                    }, {}),
-                  }))}
-                  margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
-                >
+            <ResponsiveContainer width="100%" height="100%">
+  <LineChart
+    data={mockData.habits.map((habit) => ({
+      name: habit.name,
+      ...getFilteredData(
+        habit.history.map((h) => ({ date: h.date, value: h.completed ? 100 : 0 })),
+        dateRange === "week" ? 7 : dateRange === "month" ? 30 : 90,
+      ).reduce((acc: { [key: string]: number }, day) => {
+        acc[day.date] = day.value;
+        return acc;
+      }, {} as { [key: string]: number }),  // Explicitly type the accumulator here
+    }))}
+    margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+  >
                   <CartesianGrid strokeDasharray="3 3" stroke={isDarkMode ? "#374151" : "#E5E7EB"} />
                   <XAxis
                     dataKey="date"
@@ -1778,24 +1783,25 @@ export default function Habito() {
           <div className={`${isDarkMode ? "bg-gray-800" : "bg-white"} rounded-xl shadow-sm p-4`}>
             <h3 className={`text-lg font-semibold mb-2 ${isDarkMode ? "text-white" : "text-gray-800"}`}>Steps</h3>
             <div className="flex justify-between items-center mb-4">
-              <div className={`text-3xl font-bold ${isDarkMode ? "text-white" : "text-gray-800"}`}>
-                {mockData.stats.find((s) => s.name === "Steps")?.value.toLocaleString()}
-                <span className={`text-sm ${isDarkMode ? "text-gray-400" : "text-gray-500"} ml-1`}>/ 10,000</span>
-              </div>
-              <div
-                className={`px-3 py-1 rounded-full text-sm ${
-                  mockData.stats.find((s) => s.name === "Steps")?.value >= 10000
-                    ? "bg-green-100 text-green-800"
-                    : mockData.stats.find((s) => s.name === "Steps")?.value >= 7000
-                      ? "bg-yellow-100 text-yellow-800"
-                      : "bg-red-100 text-red-800"
-                }`}
-              >
-                {mockData.stats.find((s) => s.name === "Steps")?.value >= 10000
-                  ? "Goal Reached!"
-                  : `${Math.round((mockData.stats.find((s) => s.name === "Steps")?.value || 0) / 100)}% of Goal`}
-              </div>
-            </div>
+  <div className={`text-3xl font-bold ${isDarkMode ? "text-white" : "text-gray-800"}`}>
+    {mockData.stats.find((s) => s.name === "Steps")?.value?.toLocaleString() || "0"}
+    <span className={`text-sm ${isDarkMode ? "text-gray-400" : "text-gray-500"} ml-1`}>/ 10,000</span>
+  </div>
+  <div
+    className={`px-3 py-1 rounded-full text-sm ${
+      (mockData.stats.find((s) => s.name === "Steps")?.value ?? 0) >= 10000
+        ? "bg-green-100 text-green-800"
+        : (mockData.stats.find((s) => s.name === "Steps")?.value ?? 0) >= 7000
+        ? "bg-yellow-100 text-yellow-800"
+        : "bg-red-100 text-red-800"
+    }`}
+  >
+    {(mockData.stats.find((s) => s.name === "Steps")?.value ?? 0) >= 10000
+      ? "Goal Reached!"
+      : `${Math.round(((mockData.stats.find((s) => s.name === "Steps")?.value ?? 0) / 100))}% of Goal`}
+  </div>
+</div>
+
             <div className="w-full bg-gray-200 rounded-full h-2.5 dark:bg-gray-700 mb-4">
               <div
                 className="h-2.5 rounded-full bg-orange-500"
@@ -1960,42 +1966,46 @@ export default function Habito() {
       <div className={`p-6 rounded-xl shadow-sm ${isDarkMode ? "bg-gray-800" : "bg-white"}`}>
         <h3 className={`text-lg font-semibold mb-4 ${isDarkMode ? "text-white" : "text-gray-800"}`}>Weekly Overview</h3>
         <div className="h-80">
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart
-              data={getLastNDays(7).map((date) => {
-                const statValues = {}
-                mockData.stats.forEach((stat) => {
-                  const entry = stat.history.find((h) => h.date === date)
-                  statValues[stat.name] = entry ? entry.value : 0
-                })
-                return {
-                  date,
-                  ...statValues,
-                }
-              })}
-              margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
-            >
-              <CartesianGrid strokeDasharray="3 3" stroke={isDarkMode ? "#374151" : "#E5E7EB"} />
-              <XAxis
-                dataKey="date"
-                tickFormatter={(date) => formatDate(date)}
-                stroke={isDarkMode ? "#9CA3AF" : "#6B7280"}
-              />
-              <YAxis stroke={isDarkMode ? "#9CA3AF" : "#6B7280"} />
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: isDarkMode ? "#1F2937" : "#FFFFFF",
-                  borderColor: isDarkMode ? "#374151" : "#E5E7EB",
-                  color: isDarkMode ? "#FFFFFF" : "#000000",
-                }}
-              />
-              <Legend />
-              {mockData.stats.map((stat) => (
-                <Bar key={stat.id} dataKey={stat.name} fill={stat.color} />
-              ))}
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
+  <ResponsiveContainer width="100%" height="100%">
+    <BarChart
+      data={getLastNDays(7).map((date) => {
+        // Define statValues as an object with string keys and number values
+        const statValues: { [key: string]: number } = {};  // Here we specify that the keys are strings and the values are numbers
+
+        mockData.stats.forEach((stat) => {
+          const entry = stat.history.find((h) => h.date === date);
+          statValues[stat.name] = entry ? entry.value : 0;
+        });
+
+        return {
+          date,
+          ...statValues,
+        };
+      })}
+      margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+    >
+      <CartesianGrid strokeDasharray="3 3" stroke={isDarkMode ? "#374151" : "#E5E7EB"} />
+      <XAxis
+        dataKey="date"
+        tickFormatter={(date) => formatDate(date)}
+        stroke={isDarkMode ? "#9CA3AF" : "#6B7280"}
+      />
+      <YAxis stroke={isDarkMode ? "#9CA3AF" : "#6B7280"} />
+      <Tooltip
+        contentStyle={{
+          backgroundColor: isDarkMode ? "#1F2937" : "#FFFFFF",
+          borderColor: isDarkMode ? "#374151" : "#E5E7EB",
+          color: isDarkMode ? "#FFFFFF" : "#000000",
+        }}
+      />
+      <Legend />
+      {mockData.stats.map((stat) => (
+        <Bar key={stat.id} dataKey={stat.name} fill={stat.color} />
+      ))}
+    </BarChart>
+  </ResponsiveContainer>
+</div>
+
       </div>
 
       <div className={`p-6 rounded-xl shadow-sm ${isDarkMode ? "bg-gray-800" : "bg-white"}`}>
@@ -2014,26 +2024,40 @@ export default function Habito() {
               layout="vertical"
             >
               <CartesianGrid
-                strokeDasharray="3 3"
-                horizontal={true}
-                vertical={false}
-                stroke={isDarkMode ? "#374151" : "#E5E7EB"}
-              />
-              <XAxis type="number" domain={[0, 100]} stroke={isDarkMode ? "#9CA3AF" : "#6B7280"} />
-              <YAxis dataKey="name" type="category" stroke={isDarkMode ? "#9CA3AF" : "#6B7280"} width={100} />
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: isDarkMode ? "#1F2937" : "#FFFFFF",
-                  borderColor: isDarkMode ? "#374151" : "#E5E7EB",
-                  color: isDarkMode ? "#FFFFFF" : "#000000",
-                }}
-                formatter={(value) => [`${Math.round(value)}%`, "Completion Rate"]}
-              />
-              <Bar dataKey="completionRate" radius={[0, 4, 4, 0]}>
-                {mockData.habits.map((habit, index) => (
-                  <Cell key={`cell-${index}`} fill={habit.color} />
-                ))}
-              </Bar>
+  strokeDasharray="3 3"
+  horizontal={true}
+  vertical={false}
+  stroke={isDarkMode ? "#374151" : "#E5E7EB"}
+/>
+<XAxis
+  type="number"
+  domain={[0, 100]}
+  stroke={isDarkMode ? "#9CA3AF" : "#6B7280"}
+/>
+<YAxis
+  dataKey="name"
+  type="category"
+  stroke={isDarkMode ? "#9CA3AF" : "#6B7280"}
+  width={100}
+/>
+<Tooltip
+  contentStyle={{
+    backgroundColor: isDarkMode ? "#1F2937" : "#FFFFFF",
+    borderColor: isDarkMode ? "#374151" : "#E5E7EB",
+    color: isDarkMode ? "#FFFFFF" : "#000000",
+  }}
+  formatter={(value: string | number) => {
+    const numericValue =
+      typeof value === "string" ? parseFloat(value) : value;
+    return [`${Math.round(numericValue)}%`, "Completion Rate"];
+  }}
+/>
+<Bar dataKey="completionRate" radius={[0, 4, 4, 0]}>
+  {mockData.habits.map((habit, index) => (
+    <Cell key={`cell-${index}`} fill={habit.color} />
+  ))}
+</Bar>
+
             </BarChart>
           </ResponsiveContainer>
         </div>
